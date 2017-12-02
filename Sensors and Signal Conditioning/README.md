@@ -1,25 +1,34 @@
-# Sensors and Signal Conditioning
-One of the biggest limitations of the microcontroller is the fact that it lives in a digital world. We need certain components to be able to translate the analog world to the digital world and vice-versa. In this lab, we need to be able to convert some electrical phenomena into something our microcontroller can understand. For this, we need a few building blocks to do this.
+Sensors and Signal Conditioning 
 
-## Sensors
-Sensors in a nutshell convert a physical phenomena into an electrical phenomena. For example, and accelerometer converts an acceleration into a change in capacitance (in the case of some MEMS devices). This electrical phenomena does not have to be a voltage, and as such, we need to be able to convert our sensor output to a voltage. From there, we can read in this voltage through our Analog to Digital Converter (ADC).
+PURPOSE: 
+The purpose of this lab was to combine hardware and software to read voltage outputs from 3 different sensors. The sensors that will be used are 1) Photoresistor, 2) Thermistor, 3) Phototransistor. The Photoresistor acts as a variable resistor. The value of the resistance will be dependent on the intensity of the light that hits the sensor. The thermistor will output a voltage that correlates to the ambient temperature in degrees Celsius. The Phototransistor will allow more current to pass as the intensity of light that hits the sensor increases.  The code that will be used will combine UART and ADC conversions. The ADC value of the voltage will be transmitted to Realterm through UART.
 
-## Signal Conditioning
-The signal conditioning chain can be broken up into a few main building blocks. In the beginning you have your sensor which converts something into the electrical world. We then need a block which can convert that resultant electrical phenomena into a voltage. From here, this voltage may be too small/large for our microcontroller, so we need to amplify the signal. From there, we may need to de-noise the signal by filtering. After all of this, we might be at a point where we are ready to read the signal into our processor.
+PHOTORESISTOR CIRCUIT:
+The photoresistor circuit will be a voltage divider circuit with the input voltage to the MSP430 being between the two resistors. The value of the photoresistor will change depending on the intensity of the light. When light is hitting the resistor, the resistance decreases causing a higher voltage. If the light decreases, the resistance increases. The resistance values can range from 1M ohm when no light is hitting the resistor to 100 Ohms when light is hitting it.  The voltage source will be VCC from the MSP430  which is 3.6V for both the MSP430G2553 and the MSP430FR6989. The circuits are shown below with simulations.
 
-## Task
-For this part of the lab, you need to focus on two main aspects: utilizing and reading the ADC, and conditioning a sensor to provide you with a decent output. To do this, you will need to build the proper circuitry to take a measurement from sensors which convert a physical phenomena into:
-* Voltage
-* Current
-* Resistance
+THERMISTOR CIRCUIT:
+The Thermistor circuit will output the voltage that relates to degrees Celsius. If the temperature in a room is 20 degrees C, the output voltage will be .2V. The LM35 DT has three pins. One is for VCC(3.6V), GND, and the last pin will be the input to the ADC pin on the MSP430. The circuits are shown below.
 
-## Deliverables
 
-### Code
-Your code for this section should focus heavily on the ADC and being able to pull data from it. Your code need to communicate back to your computer using UART at 9600 Baud and send the ADC contents at 1 reading per second to start. This really is meant for you to see whether or not your signal conditioning is actually working and you can see changes in your sensor reading. This code should be very very similar to code you have written before and should be simple to port between your processors.
+PHOTOTRANSISTOR CIRCUIT:
+The circuit for the phototransistor needs to output a voltage from the changing current from the Transistor. To do this a Transimpedance amplifier will be used.  The circuit and the simulations are shown below.
 
-### Hardware
-The hardware portion should be the same for each of the processors. You will need to have a total of 3 circuits made, each corresponding to a different sensor. You need to look at the range of measurements and the amount of resolution you can get out of your ADC and determine how to convert, scale, and filter your signal. Don't forget the fact that you will need to convert to a voltage, making some of these circuits not so trivial. The main goal as the hardware designer for these sensors is to provide the microprocessor with the best resolution to maximize the effectiveness of the ADC.
 
-### README
-The README for this part of the lab should talk briefly about how the ADC code works, but focus way more on the hardware aspect. You need to include schematics of your circuits, and well as supporting simulation/calculations which show that your circuits should work. You should talk about what types of circuits you are using and how they actually work.
+
+
+MSP430G2553 Code:
+For the MSP430G2553, the input ADC pin will be pin 1.3. The RX and TX pins for UART will be 1.1 and 1.2 respectively.  To configure ADC in the msp430, the following code will be used.
+In main:
+P1SEL |= BIT3;                    // Set ADC input to 1.3
+        ConfigureAdc();                    // ADC set-up function call
+        __enable_interrupt();            // Enable interrupts.
+This code will set PIN 1.3 to input for the ADC. ConfigureAdc(); will call a function that will set all the ADC registers. __enable_interrupt(); will allow ADC interrupts.
+In ConfigureAdc(); :
+ADC10CTL1 = INCH_3 + ADC10DIV_3 ;  // From datasheet, inch_3=channel A3, ADC10DIV_3
+    ADC10CTL0 = SREF_0 + ADC10SHT_3 + ADC10ON + ADC10IE; // Vcc & Vss as reference, Sample and hold for 64 Clock cycles, ADC on, ADC interrupt enable
+    //SREF_0; VCC(3.3V) and VSS(0V) as reference voltages
+    //ADC10SHT_3;  
+    //ADC10ON= Turn ADC 10 conversion on
+    //ADC10IE; ADC10 interrupt enabled 
+    ADC10AE0 |= BIT3;    //ADC input pin 1.3
+ADC10CTL1 and ADC10CTL0 are the ADC memory control registers 1 and 0. Inch_3 chooses analog input 3 and ADC10DIV_3 divides the clock. SREF_0 chooses the reference voltage which will be VCC. ADC10IE enables ADC interrupts. 
