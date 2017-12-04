@@ -19,16 +19,34 @@ The circuit for the phototransistor needs to output a voltage from the changing 
 MSP430G2553 Code:
 For the MSP430G2553, the input ADC pin will be pin 1.3. The RX and TX pins for UART will be 1.1 and 1.2 respectively.  To configure ADC in the msp430, the following code will be used.
 In main:
+
 P1SEL |= BIT3;                    // Set ADC input to 1.3
+
         ConfigureAdc();                    // ADC set-up function call
+        
         __enable_interrupt();            // Enable interrupts.
-This code will set PIN 1.3 to input for the ADC. ConfigureAdc(); will call a function that will set all the ADC registers. __enable_interrupt(); will allow ADC interrupts.
+        
+This code will set PIN 1.3 to input for the ADC. ConfigureAdc(); will call a function that will set all the ADC registers. 
+
+__enable_interrupt(); will allow ADC interrupts.
+
 In ConfigureAdc(); :
+
 ADC10CTL1 = INCH_3 + ADC10DIV_3 ;  // From datasheet, inch_3=channel A3, ADC10DIV_3
+
     ADC10CTL0 = SREF_0 + ADC10SHT_3 + ADC10ON + ADC10IE; // Vcc & Vss as reference, Sample and hold for 64 Clock cycles, ADC on, ADC interrupt enable
+    
     //SREF_0; VCC(3.3V) and VSS(0V) as reference voltages
+    
     //ADC10SHT_3;  
+    
     //ADC10ON= Turn ADC 10 conversion on
+    
     //ADC10IE; ADC10 interrupt enabled 
+    
     ADC10AE0 |= BIT3;    //ADC input pin 1.3
-ADC10CTL1 and ADC10CTL0 are the ADC memory control registers 1 and 0. Inch_3 chooses analog input 3 and ADC10DIV_3 divides the clock. SREF_0 chooses the reference voltage which will be VCC. ADC10IE enables ADC interrupts. 
+    
+ADC10CTL1 and ADC10CTL0 are the ADC memory control registers 1 and 0. Inch_3 chooses analog input 3 and ADC10DIV_3 divides the clock.
+
+SREF_0 chooses the reference voltage which will be VCC. ADC10IE enables ADC interrupts.
+
