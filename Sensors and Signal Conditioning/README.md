@@ -1,22 +1,24 @@
-Sensors and Signal Conditioning 
+# Sensors and Signal Conditioning 
 
-PURPOSE: 
+# PURPOSE: 
 The purpose of this lab was to combine hardware and software to read voltage outputs from 3 different sensors. The sensors that will be used are 1) Photoresistor, 2) Thermistor, 3) Phototransistor. The Photoresistor acts as a variable resistor. The value of the resistance will be dependent on the intensity of the light that hits the sensor. The thermistor will output a voltage that correlates to the ambient temperature in degrees Celsius. The Phototransistor will allow more current to pass as the intensity of light that hits the sensor increases.  The code that will be used will combine UART and ADC conversions. The ADC value of the voltage will be transmitted to Realterm through UART.
 
-PHOTORESISTOR CIRCUIT:
+# PHOTORESISTOR CIRCUIT:
 The photoresistor circuit will be a voltage divider circuit with the input voltage to the MSP430 being between the two resistors. The value of the photoresistor will change depending on the intensity of the light. When light is hitting the resistor, the resistance decreases causing a higher voltage. If the light decreases, the resistance increases. The resistance values can range from 1M ohm when no light is hitting the resistor to 100 Ohms when light is hitting it.  The voltage source will be VCC from the MSP430  which is 3.6V for both the MSP430G2553 and the MSP430FR6989. The circuits are shown below with simulations.
 
-THERMISTOR CIRCUIT:
+# THERMISTOR CIRCUIT:
 The Thermistor circuit will output the voltage that relates to degrees Celsius. If the temperature in a room is 20 degrees C, the output voltage will be .2V. The LM35 DT has three pins. One is for VCC(3.6V), GND, and the last pin will be the input to the ADC pin on the MSP430. The circuits are shown below.
 
 
-PHOTOTRANSISTOR CIRCUIT:
+# PHOTOTRANSISTOR CIRCUIT:
 The circuit for the phototransistor needs to output a voltage from the changing current from the Transistor. To do this a Transimpedance amplifier will be used.  The circuit and the simulations are shown below.
 
 
 
 
-MSP430G2553 Code:
+# MSP430G2553 Code:
+
+# Configure ADC
 For the MSP430G2553, the input ADC pin will be pin 1.3. The RX and TX pins for UART will be 1.1 and 1.2 respectively.  To configure ADC in the msp430, the following code will be used.
 In main:
 
@@ -49,4 +51,26 @@ ADC10CTL1 = INCH_3 + ADC10DIV_3 ;  // From datasheet, inch_3=channel A3, ADC10DI
 ADC10CTL1 and ADC10CTL0 are the ADC memory control registers 1 and 0. Inch_3 chooses analog input 3 and ADC10DIV_3 divides the clock.
 
 SREF_0 chooses the reference voltage which will be VCC. ADC10IE enables ADC interrupts.
+
+# Transmit Value over UART
+ To transmit the ADC value over UART, the following code is used.
+   /*************TRANSMIT ADC VALUE OVER UART *************/
+        while(1)
+        {
+            __delay_cycles(10000);                // Delay Transmit for 1 second
+            
+            ADC10CTL0 |= ENC + ADC10SC;            // Sampling and conversion start
+            
+            __bis_SR_register(CPUOFF + GIE);    // Low  Power Mode 0 with interrupts enabled
+            
+            ADC_value = ADC10MEM;    // Set ADC_value to the value in the ADC10MEM register
+            
+            UCA0TXBUF = ADC_value;   //Transmit the ADC value through UART
+
+
+        }
+        
+        
+Every second, the MSP430 will transmit the ADC value stored in ADC10MEM. 
+
 
